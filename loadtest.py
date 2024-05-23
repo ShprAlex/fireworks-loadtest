@@ -2,7 +2,7 @@ from loader import Loader
 
 
 def main():
-    loader = Loader("http://example.com")
+    loader = Loader("http://example.com", timeout=1)
     loader.start()
 
     print("\nLoad times:")
