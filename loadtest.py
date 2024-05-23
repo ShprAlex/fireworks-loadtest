@@ -1,23 +1,13 @@
 from loader import Loader
 
-urls = [
-    'http://example.com',
-    'http://example.org',
-    'http://example.net',
-]
-
 
 def main():
-    loader = Loader()
-    for url in urls:
-        for i in range(50):
-            loader.load_url(url)
-
-    loader.wait_to_finish()
+    loader = Loader("http://example.com")
+    loader.start()
 
     print("\nLoad times:")
-    for url, load_time in loader.load_times.items():
-        print(f"{url}: {[int(t*1000) for t in load_time]} ms")
+    for lr in loader.loader_requests:
+        print(int((lr.end_time - lr.start_time)*1000), lr.end_time, lr.status)
 
 
 if __name__ == "__main__":

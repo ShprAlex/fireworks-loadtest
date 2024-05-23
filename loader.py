@@ -2,27 +2,47 @@
 import requests
 import threading
 import time
-from collections import defaultdict
+
+
+class LoaderRequest:
+    def __init__(self, url):
+        self.url = url
+        self.start_time = None
+        self.end_time = None
+        self.status = None
+        self.thread = None
+
+    def load(self):
+        self.start_time = time.time()
+        response = requests.get(self.url)
+        self.end_time = time.time()
+        self.status = response.status_code
+
+    def start(self):
+        self.thread = threading.Thread(target=self.load)
+        self.thread.start()
 
 
 class Loader:
+    def __init__(self, url, qps=1000, duration=1):
+        self.loader_requests = []
+        self.url = url
+        self.qps = qps
+        self.duration = duration
+        self.start_time = None
+        self.end_time = None
 
-    def __init__(self):
-        self.load_times = defaultdict(list)
-        self.threads = []
+    def start(self):
+        self.start_time = time.time()
+        count = 0
+        print(self.start_time)
+        while time.time() < self.start_time+self.duration and count < 1000:
+            loader_request = LoaderRequest(self.url)
+            self.loader_requests.append(loader_request)
+            loader_request.start()
+            count += 1
 
-    def _load_url(self, url):
-        start_time = time.time()
-        response = requests.get(url)
-        load_time = time.time() - start_time
-        self.load_times[url].append(load_time)
-        print(f"Loaded {url} in {load_time:.2f} seconds")
+        print(time.time())
 
-    def load_url(self, url):
-        thread = threading.Thread(target=self._load_url, args=(url,))
-        self.threads.append(thread)
-        thread.start()
-
-    def wait_to_finish(self):
-        for thread in self.threads:
-            thread.join()
+        for lr in self.loader_requests:
+            lr.thread.join()
