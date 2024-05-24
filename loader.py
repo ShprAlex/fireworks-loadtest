@@ -27,22 +27,21 @@ class SessionConfig:
     can be updated to support visiting multiple urls in a single pass.
     """
 
-    def __init__(self, session_config: dict, timeout: Optional[int]) -> None:
-        self.url = session_config[0]["url"]
-        self.headers = session_config[0]["headers"]
+    def __init__(self, url: str, headers: dict, timeout: Optional[int]) -> None:
+        self.url = url
+        self.headers = headers
         if timeout == 0:
             timeout = None
         self.timeout = timeout
 
 
 class Task:
-    def __init__(self, session_config: SessionConfig) -> None:
-        """
-        Initialize a task that will be used to load a single request session.
+    """
+    Tasks are used to load a single request session. During a load test we run the task
+    multiple times in parallel.
+    """
 
-        Args:
-            session_config (SessionConfig): Info about the requests we're making during this task.
-        """
+    def __init__(self, session_config: SessionConfig) -> None:
         self.session_config = session_config
         self.start_time = None
         self.end_time = None
@@ -52,6 +51,7 @@ class Task:
     def _load(self) -> None:
         self.start_time = time.time()
         try:
+            raise requests.exceptions.Timeout
             response = requests.get(
                 self.session_config.url,
                 headers=self.session_config.headers,
@@ -72,6 +72,18 @@ class Task:
 
 
 class Loader:
+    """
+    The Loader creates a list of Tasks for a given SessionConfig.
+
+    We start each task in its own Thread.
+
+    Args:
+        session_config (SessionConfig): Info about the web requests we're making for the session,
+            for now we only support loading one URL per session.
+        qps (int): Queries Per Second
+        duration (int): How many seconds to run the load test for.
+    """
+
     def __init__(self, session_config: SessionConfig, qps: int = 100, duration: int = 1) -> None:
         self.tasks = []
         self.session_config = session_config
@@ -80,11 +92,19 @@ class Loader:
         self.start_time = None
         self.end_time = None
 
-    def get_rate_limited_max_task_count(self) -> None:
+    def get_rate_limited_max_task_count(self) -> float:
+        """
+        Calculate how many requests we should have made by this time assuming an even request rate.
+        We use this value to limit our request rate to match the desired QPS.
+        """
         elapsed_seconds = time.time()-self.start_time
         return elapsed_seconds*self.qps
 
     def start(self) -> None:
+        """
+        Start multiple tasks at a rate of QPS. This function waits for the task threads
+        to finish and returns.
+        """
         self.start_time = time.time()
         logger.info(f"Started loader")
         task_count = 0

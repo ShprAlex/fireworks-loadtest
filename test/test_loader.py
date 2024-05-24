@@ -13,10 +13,9 @@ class TestLoader(unittest.TestCase):
         mock_get.return_value = mock_response
 
         # Create a session config for the test
-        session_config = SessionConfig([{
-            "url": "http://example.com",
-            "headers": {}
-        }], timeout=1)
+        session_config = SessionConfig(
+            url="http://example.com", headers={}, timeout=1
+        )
 
         # Initialize the Loader
         loader = Loader(session_config, qps=30, duration=5)

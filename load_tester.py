@@ -1,6 +1,7 @@
 import argparse
 import json
 import os
+from typing import Optional
 from loader import Loader, SessionConfig
 from stats import get_stats, get_stats_in_batches
 
@@ -19,8 +20,8 @@ def print_stats(stats, elapsed_time: float) -> None:
 
 
 def print_results(loader: Loader) -> None:
-    # we either print stats every second of every 10th of a second
-    batch_duration = 1 if loader.duration > 10 else 0.1
+    # we could set this to 0.1 seconds for fine grained reporting.
+    batch_duration = 1
     stats_in_batches = get_stats_in_batches(loader, batch_duration)
 
     print("\nPerformance over time:")
@@ -45,8 +46,12 @@ def load_config(file_path: str) -> dict:
     return config
 
 
-def main(config: dict, qps: int, duration: int, timeout: int):
-    session_config = SessionConfig(config["session"], timeout=timeout)
+def main(config: dict, qps: int, duration: int, timeout: int, url: Optional[str]) -> None:
+    if url is None:
+        url = config["session"][0]["url"]
+    headers = config["session"][0]["headers"]
+    # SessionConfig is designed for easier testing from the command line
+    session_config = SessionConfig(url=url, headers=headers, timeout=timeout)
     loader = Loader(session_config, duration=duration, qps=qps)
 
     print(
@@ -66,10 +71,13 @@ if __name__ == "__main__":
         "--qps", type=int, default=None, help="Queries per second."
     )
     parser.add_argument(
-        "--duration", type=int, default=None, help="Test duration is seconds."
+        "--duration", type=int, default=None, help="Loadtest duration is seconds."
     )
     parser.add_argument(
         "--timeout", type=int, default=None, help="Force timeout if page doesn't load within this many seconds. Zero for no timeout."
+    )
+    parser.add_argument(
+        "--url", type=str, default=None, help="URL to load test, uses headers from config file."
     )
     args = parser.parse_args()
     config_file = args.config
@@ -79,4 +87,4 @@ if __name__ == "__main__":
     duration = args.duration if args.duration is not None else config["duration"]
     timeout = args.timeout if args.timeout is not None else config["timeout"]
 
-    main(config=config, qps=qps, duration=duration, timeout=timeout)
+    main(config=config, qps=qps, duration=duration, timeout=timeout, url=args.url)
