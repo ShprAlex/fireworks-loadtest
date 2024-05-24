@@ -20,8 +20,8 @@ class SessionConfig:
     can be updated to support visiting multiple urls in a single pass.
     """
 
-    def __init__(self, url, timeout=None):
-        self.url = url
+    def __init__(self, session_config, timeout=None):
+        self.url = session_config[0]["url"]
         self.timeout = timeout
 
 

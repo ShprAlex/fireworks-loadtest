@@ -41,7 +41,14 @@ def load_config(file_path):
     return config
 
 
-def main():
+def main(config):
+    session_config = SessionConfig(config["session"], timeout=1)
+    loader = Loader(session_config, duration=2)
+    loader.start()
+    print_results(loader)
+
+
+if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument(
         "-config", default="config.json", type=str, help="Path to the config file"
@@ -50,13 +57,4 @@ def main():
     config_file = args.config
     config = load_config(config_file)
 
-    session_config = config["session"]
-
-    session_config = SessionConfig(session_config[0]["url"], timeout=1)
-    loader = Loader(session_config, duration=2)
-    loader.start()
-    print_results(loader)
-
-
-if __name__ == "__main__":
-    main()
+    main(config)
