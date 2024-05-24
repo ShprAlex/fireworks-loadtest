@@ -26,9 +26,11 @@ class SessionConfig:
     can be updated to support visiting multiple urls in a single pass.
     """
 
-    def __init__(self, session_config, timeout=None):
+    def __init__(self, session_config, timeout):
         self.url = session_config[0]["url"]
         self.headers = session_config[0]["headers"]
+        if timeout == 0:
+            timeout = None
         self.timeout = timeout
 
 
@@ -109,7 +111,7 @@ class Loader:
             task.thread.join()
 
         logger.info(
-            f"Completed {task_count} tasks at {time.time()-self.start_time:.2f}s"
+            f"Completed {task_count} tasks in {time.time()-self.start_time:.2f}s"
         )
 
         # for the Loader we consider the end_time to be the start_time of

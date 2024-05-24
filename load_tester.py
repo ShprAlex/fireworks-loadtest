@@ -19,8 +19,12 @@ def print_stats(stats, elapsed_time):
 
 
 def print_results(loader):
-    batch_duration = 0.1
+    # we either print stats every second of every 10th of a second
+    batch_duration = 1 if loader.duration > 10 else 0.1
     stats_in_batches = get_stats_in_batches(loader, batch_duration)
+
+    print("\nPerformance over time:")
+
     for batch_index, stats in enumerate(stats_in_batches):
         elapsed_time = (batch_index+1)*batch_duration
         print_stats(stats, elapsed_time)
@@ -41,9 +45,14 @@ def load_config(file_path):
     return config
 
 
-def main(config):
-    session_config = SessionConfig(config["session"], timeout=10)
-    loader = Loader(session_config, duration=12, qps=10)
+def main(config, qps, duration, timeout):
+    session_config = SessionConfig(config["session"], timeout=timeout)
+    loader = Loader(session_config, duration=duration, qps=qps)
+
+    print(
+        f"\nLoad testing {loader.session_config.url} for {duration}s at {qps} QPS.\n"
+    )
+
     loader.start()
     print_results(loader)
 
@@ -51,10 +60,23 @@ def main(config):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument(
-        "-config", default="config.json", type=str, help="Path to the config file"
+        "--config", type=str, default="config.json", help="Path to config file containing session URLs and headers."
+    )
+    parser.add_argument(
+        "--qps", type=int, default=None, help="Queries per second."
+    )
+    parser.add_argument(
+        "--duration", type=int, default=None, help="Test duration is seconds."
+    )
+    parser.add_argument(
+        "--timeout", type=int, default=None, help="Force timeout if page doesn't load within this many seconds. Zero for no timeout."
     )
     args = parser.parse_args()
     config_file = args.config
     config = load_config(config_file)
 
-    main(config)
+    qps = args.qps if args.qps is not None else config["qps"]
+    duration = args.duration if args.duration is not None else config["duration"]
+    timeout = args.timeout if args.timeout is not None else config["timeout"]
+
+    main(config=config, qps=qps, duration=duration, timeout=timeout)

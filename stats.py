@@ -12,8 +12,7 @@ def get_stats(tasks):
             task.end_time - task.start_time for task in tasks
         ]
         for task in tasks:
-            status = task.status
-            response_statuses[status//100] += 1
+            response_statuses[task.status//100] += 1
         avg_response_time = sum(response_times)/task_count
         status_percents = [
             status_count / task_count for status_count in response_statuses
