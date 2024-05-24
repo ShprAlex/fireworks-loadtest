@@ -1,3 +1,6 @@
+import argparse
+import json
+import os
 from loader import Loader, RequestConfig
 from stats import get_stats, get_stats_in_batches
 
@@ -28,8 +31,28 @@ def print_results(loader):
     )
 
 
+def load_config(file_path):
+    if not os.path.exists(file_path):
+        raise FileNotFoundError(f"Config file not found: {file_path}")
+
+    with open(file_path, "r") as file:
+        config = json.load(file)
+
+    return config
+
+
 def main():
-    request_config = RequestConfig("http://example.com", timeout=1)
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        "-config", default="config.json", type=str, help="Path to the config file"
+    )
+    args = parser.parse_args()
+    config_file = args.config
+    config = load_config(config_file)
+
+    session_config = config["session"]
+
+    request_config = RequestConfig(session_config[0]["url"], timeout=1)
     loader = Loader(request_config, duration=2)
     loader.start()
     print_results(loader)
