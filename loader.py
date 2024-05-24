@@ -11,12 +11,12 @@ logger = logging.getLogger(__name__)
 TIME_OUT_STATUS = 600
 
 
-class RequestConfig:
+class SessionConfig:
     """
-    RequestConfig contains information about the URLs we're visiting during a single
-    loader pass. This includes the request headers, and a request timeout.
+    SessionConfig contains information about the URLs we're visiting during a single
+    loader session. This includes the request headers, and a request timeout.
 
-    For now we only support visiting one URL during a loader pass, but this class
+    For now we only support visiting one URL during a session, but this class
     can be updated to support visiting multiple urls in a single pass.
     """
 
@@ -25,15 +25,15 @@ class RequestConfig:
         self.timeout = timeout
 
 
-class RequestPass:
-    def __init__(self, request_config):
+class Task:
+    def __init__(self, session_config):
         """
-        Initialize a single request pass.
+        Initialize a task that will be used to load a single request session.
 
         Args:
-            request_config (RequestConfig): Info about the request we're making over the pass.
+            session_config (SessionConfig): Info about the requests we're making during this task.
         """
-        self.request_config = request_config
+        self.session_config = session_config
         self.start_time = None
         self.end_time = None
         self.status = None
@@ -43,7 +43,7 @@ class RequestPass:
         self.start_time = time.time()
         try:
             response = requests.get(
-                self.request_config.url, timeout=self.request_config.timeout
+                self.session_config.url, timeout=self.session_config.timeout
             )
             self.status = response.status_code
         except requests.exceptions.Timeout:
@@ -57,49 +57,49 @@ class RequestPass:
 
 
 class Loader:
-    def __init__(self, request_config, qps=1000, duration=1):
-        self.request_passes = []
-        self.request_config = request_config
+    def __init__(self, session_config, qps=1000, duration=1):
+        self.tasks = []
+        self.session_config = session_config
         self.qps = qps
         self.duration = duration
         self.start_time = None
         self.end_time = None
 
-    def get_rate_limited_max_request_count(self):
+    def get_rate_limited_max_task_count(self):
         elapsed_seconds = time.time()-self.start_time
         return elapsed_seconds*self.qps
 
     def start(self):
         self.start_time = time.time()
         logger.info(f"Started loader")
-        pass_count = 0
+        task_count = 0
         expected_end_time = self.start_time+self.duration
-        expected_pass_count = self.qps*self.duration
-        # we're making requests at an even rate but for tidy accounting make sure we reach
-        # expected_pass_count with the very last batch which might take an extra millisecond.
-        while time.time() < expected_end_time or pass_count < expected_pass_count:
-            if pass_count > self.get_rate_limited_max_request_count():
+        expected_task_count = self.qps*self.duration
+        # we're calling tasks at an even rate but for tidy accounting make sure we reach
+        # expected_task_count with the very last batch which might take an extra millisecond.
+        while time.time() < expected_end_time or task_count < expected_task_count:
+            if task_count > self.get_rate_limited_max_task_count():
                 # sleep for 1ms to save CPU cycles
                 # this still allows us to request more than 1000 times a second because
                 # multiple requests will happen after we wake up
                 time.sleep(0.001)
                 continue
-            request_pass = RequestPass(self.request_config)
-            self.request_passes.append(request_pass)
-            request_pass.start()
-            pass_count += 1
-            if pass_count % 1000 == 0:
+            task = Task(self.session_config)
+            self.tasks.append(task)
+            task.start()
+            task_count += 1
+            if task_count % 1000 == 0:
                 logger.info(
-                    f"Started {pass_count} requests at {time.time()-self.start_time:.2f}s"
+                    f"Started {task_count} tasks at {time.time()-self.start_time:.2f}s"
                 )
 
-        for rp in self.request_passes:
-            rp.thread.join()
+        for task in self.tasks:
+            task.thread.join()
 
         logger.info(
-            f"Completed {pass_count} requests at {time.time()-self.start_time:.2f}s"
+            f"Completed {task_count} tasks at {time.time()-self.start_time:.2f}s"
         )
 
         # for the Loader we consider the end_time to be the start_time of
-        # the last request (not how long it takes requests to complete)
-        self.end_time = max([rp.start_time for rp in self.request_passes])
+        # the last tasks (not how long it takes requests to complete)
+        self.end_time = max([task.start_time for task in self.tasks])

@@ -1,26 +1,26 @@
 
-def get_stats(request_passes):
-    pass_count = len(request_passes)
+def get_stats(tasks):
+    task_count = len(tasks)
     avg_response_time = 0
 
     # group response statuses starting with 100, 200, etc.
     response_statuses = [0]*7
     status_percents = [0]*7
 
-    if pass_count > 0:
+    if task_count > 0:
         response_times = [
-            lr.end_time - lr.start_time for lr in request_passes
+            task.end_time - task.start_time for task in tasks
         ]
-        for request_pass in request_passes:
-            status = request_pass.status
+        for task in tasks:
+            status = task.status
             response_statuses[status//100] += 1
-        avg_response_time = sum(response_times)/pass_count
+        avg_response_time = sum(response_times)/task_count
         status_percents = [
-            status_count / pass_count for status_count in response_statuses
+            status_count / task_count for status_count in response_statuses
         ]
 
     return {
-        "pass_count": pass_count,
+        "task_count": task_count,
         "avg_response_time": avg_response_time,
         "status_percents": status_percents,
         "success": status_percents[1] + status_percents[2] + status_percents[3],
@@ -29,18 +29,18 @@ def get_stats(request_passes):
     }
 
 
-def group_completed_requests_into_batches(loader, batch_duration=0.1):
+def group_completed_tasks_into_batches(loader, batch_duration=0.1):
     batch_start_time = loader.start_time
     batches = []
-    request_index = 0
+    task_index = 0
     while batch_start_time < loader.start_time+loader.duration:
         batch = []
         batches.append(batch)
-        while request_index < len(loader.request_passes):
-            request_pass = loader.request_passes[request_index]
-            if request_pass.start_time < batch_start_time+batch_duration:
-                batch.append(request_pass)
-                request_index += 1
+        while task_index < len(loader.tasks):
+            task = loader.tasks[task_index]
+            if task.start_time < batch_start_time+batch_duration:
+                batch.append(task)
+                task_index += 1
             else:
                 break
         batch_start_time += batch_duration
@@ -54,7 +54,7 @@ def group_completed_requests_into_batches(loader, batch_duration=0.1):
 
 
 def get_stats_in_batches(loader, batch_duration=0.1):
-    request_batches = group_completed_requests_into_batches(
+    task_batches = group_completed_tasks_into_batches(
         loader, batch_duration)
 
-    return [get_stats(batch) for batch in request_batches]
+    return [get_stats(batch) for batch in task_batches]
