@@ -5,19 +5,23 @@ from stats import get_stats_in_batches
 def print_results(loader):
     batch_duration = 0.1
     stats_in_batches = get_stats_in_batches(loader, batch_duration)
-    elapsed_time = batch_duration
-    for stats in stats_in_batches:
+    for batch_index, stats in enumerate(stats_in_batches):
         pass_count = stats["pass_count"]
         avg_response_time = stats["avg_response_time"]
-        status_percents = stats["status_percents"]
+        elapsed_time = (batch_index+1)*batch_duration
+        success = stats["success"]
+        error = stats["error"]
+        timeout = stats["timeout"]
 
-        print(f"Time {elapsed_time}, Request count {pass_count}, Response time {avg_response_time}, Statuses {status_percents}")
-        elapsed_time += batch_duration
+        print(
+            f"Time {elapsed_time:.2f}s, Request count {pass_count:4d}, Avg resp time {avg_response_time:.3f}s "
+            f"Success {success*100:3.0f}%, Error {error*100:3.0f}%, Timeout {timeout*100:3.0f}%"
+        )
 
 
 def main():
     request_config = RequestConfig("http://example.com", timeout=1)
-    loader = Loader(request_config, duration=5)
+    loader = Loader(request_config, duration=2)
     loader.start()
     print_results(loader)
 

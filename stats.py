@@ -4,8 +4,8 @@ def get_stats(request_passes):
     avg_response_time = 0
 
     # group response statuses starting with 100, 200, etc.
-    response_statuses = [0]*6
-    status_percents = [0]*6
+    response_statuses = [0]*7
+    status_percents = [0]*7
 
     if pass_count > 0:
         response_times = [
@@ -13,7 +13,7 @@ def get_stats(request_passes):
         ]
         for request_pass in request_passes:
             status = request_pass.status
-            response_statuses[status//100-1] += 1
+            response_statuses[status//100] += 1
         avg_response_time = sum(response_times)/pass_count
         status_percents = [
             status_count / pass_count for status_count in response_statuses
@@ -22,7 +22,10 @@ def get_stats(request_passes):
     return {
         "pass_count": pass_count,
         "avg_response_time": avg_response_time,
-        "status_percents": status_percents
+        "status_percents": status_percents,
+        "success": status_percents[1] + status_percents[2] + status_percents[3],
+        "error": status_percents[4] + status_percents[5],
+        "timeout": status_percents[6]
     }
 
 
