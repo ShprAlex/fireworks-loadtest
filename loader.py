@@ -12,7 +12,7 @@ logger = logging.getLogger(__name__)
 
 class RequestsErrorStatus:
     """
-    This lets us report on errors with ULR requests as if they were HTTP response codes.
+    This lets us report on errors with URL requests as if they were HTTP response codes.
     """
     CONNECTION_ERROR = 600
     TIME_OUT = 700
@@ -51,7 +51,6 @@ class Task:
     def _load(self) -> None:
         self.start_time = time.time()
         try:
-            raise requests.exceptions.Timeout
             response = requests.get(
                 self.session_config.url,
                 headers=self.session_config.headers,
