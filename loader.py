@@ -6,18 +6,29 @@ import time
 TIME_OUT_STATUS = 600
 
 
-class RequestPass:
+class RequestConfig:
+    """
+    RequestConfig contains information about the URLs we're visiting during a single
+    loader pass. This includes the request headers, and a request timeout.
+
+    For now we only support visiting one URL during a loader pass, but this class
+    can be updated to support visiting multiple urls in a single pass.
+    """
+
     def __init__(self, url, timeout=None):
+        self.url = url
+        self.timeout = timeout
+
+
+class RequestPass:
+    def __init__(self, request_config):
         """
         Initialize a single request pass.
 
         Args:
-            url (str): the url we're loading
-            timeout (Optional[float]): how long we're willing to wait for the request to load
-                or None if unlimited.
+            request_config (RequestConfig): Info about the request we're making over the pass.
         """
-        self.url = url
-        self.timeout = timeout
+        self.request_config = request_config
         self.start_time = None
         self.end_time = None
         self.status = None
@@ -26,7 +37,9 @@ class RequestPass:
     def load(self):
         self.start_time = time.time()
         try:
-            response = requests.get(self.url, timeout=self.timeout)
+            response = requests.get(
+                self.request_config.url, timeout=self.request_config.timeout
+            )
             self.status = response.status_code
         except requests.exceptions.Timeout:
             self.status = TIME_OUT_STATUS
@@ -39,10 +52,9 @@ class RequestPass:
 
 
 class Loader:
-    def __init__(self, url, qps=1000, duration=1, timeout=3):
+    def __init__(self, request_config, qps=1000, duration=1):
         self.request_passes = []
-        self.timeout = timeout
-        self.url = url
+        self.request_config = request_config
         self.qps = qps
         self.duration = duration
         self.start_time = None
@@ -66,7 +78,7 @@ class Loader:
                 # multiple requests will happen after we wake up
                 time.sleep(0.001)
                 continue
-            request_pass = RequestPass(self.url, timeout=self.timeout)
+            request_pass = RequestPass(self.request_config)
             self.request_passes.append(request_pass)
             request_pass.start()
             pass_count += 1

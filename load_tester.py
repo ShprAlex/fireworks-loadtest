@@ -1,4 +1,4 @@
-from loader import Loader
+from loader import Loader, RequestConfig
 from stats import get_stats_in_batches
 
 
@@ -16,7 +16,8 @@ def print_results(loader):
 
 
 def main():
-    loader = Loader("http://example.com", duration=5, timeout=1)
+    request_config = RequestConfig("http://example.com", timeout=1)
+    loader = Loader(request_config, duration=5)
     loader.start()
     print_results(loader)
 
