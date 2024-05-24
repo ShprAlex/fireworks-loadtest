@@ -4,8 +4,8 @@ def get_stats(tasks):
     avg_response_time = 0
 
     # group response statuses starting with 100, 200, etc.
-    response_statuses = [0]*7
-    status_percents = [0]*7
+    response_statuses = [0]*8
+    status_percents = [0]*8
 
     if task_count > 0:
         response_times = [

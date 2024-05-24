@@ -13,7 +13,7 @@ def print_stats(stats, elapsed_time):
     timeout = stats["timeout"]
 
     print(
-        f"Time {elapsed_time:.2f}s, Request count {task_count:4d}, Avg resp time {avg_response_time:.3f}s "
+        f"Time {elapsed_time:5.2f}s, Request count {task_count:4d}, Avg resp time {avg_response_time:6.3f}s "
         f"Success {success*100:3.0f}%, Error {error*100:3.0f}%, Timeout {timeout*100:3.0f}%"
     )
 
@@ -43,7 +43,7 @@ def load_config(file_path):
 
 def main(config):
     session_config = SessionConfig(config["session"], timeout=10)
-    loader = Loader(session_config, duration=20)
+    loader = Loader(session_config, duration=12, qps=10)
     loader.start()
     print_results(loader)
 

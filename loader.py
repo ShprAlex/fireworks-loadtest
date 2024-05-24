@@ -55,8 +55,9 @@ class Task:
                 timeout=self.session_config.timeout
             )
             self.status = response.status_code
-        except requests.exceptions.ConnectionError:
+        except requests.exceptions.ConnectionError as error:
             self.status = RequestsErrorStatus.CONNECTION_ERROR
+            logger.warning(error)
         except requests.exceptions.Timeout:
             self.status = RequestsErrorStatus.TIME_OUT
 
