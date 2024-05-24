@@ -87,3 +87,7 @@ class Loader:
 
         for lr in self.request_passes:
             lr.thread.join()
+
+        # for the Loader we consider the end_time to be the start_time of
+        # the last request (not how long it takes requests to complete)
+        self.end_time = max([rp.start_time for rp in self.request_passes])
