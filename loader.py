@@ -39,7 +39,7 @@ class RequestPass:
         self.status = None
         self.thread = None
 
-    def load(self):
+    def _load(self):
         self.start_time = time.time()
         try:
             response = requests.get(
@@ -52,7 +52,7 @@ class RequestPass:
         self.end_time = time.time()
 
     def start(self):
-        self.thread = threading.Thread(target=self.load)
+        self.thread = threading.Thread(target=self._load)
         self.thread.start()
 
 
@@ -93,8 +93,8 @@ class Loader:
                     f"Started {pass_count} requests at {time.time()-self.start_time:.2f}s"
                 )
 
-        for lr in self.request_passes:
-            lr.thread.join()
+        for rp in self.request_passes:
+            rp.thread.join()
 
         logger.info(
             f"Completed {pass_count} requests at {time.time()-self.start_time:.2f}s"
