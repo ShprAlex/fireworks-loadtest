@@ -1,5 +1,10 @@
 
-def get_stats(tasks):
+from typing import List
+
+from loader import Task
+
+
+def get_stats(tasks: List[Task]) -> dict:
     task_count = len(tasks)
     avg_response_time = 0
 
@@ -31,7 +36,7 @@ def get_stats(tasks):
     }
 
 
-def group_completed_tasks_into_batches(loader, batch_duration=0.1):
+def group_completed_tasks_into_batches(loader, batch_duration: float = 0.1) -> List[List[Task]]:
     batch_start_time = loader.start_time
     batches = []
     task_index = 0
@@ -55,7 +60,7 @@ def group_completed_tasks_into_batches(loader, batch_duration=0.1):
     return batches
 
 
-def get_stats_in_batches(loader, batch_duration=0.1):
+def get_stats_in_batches(loader, batch_duration: float = 0.1) -> List[dict]:
     task_batches = group_completed_tasks_into_batches(
         loader, batch_duration)
 

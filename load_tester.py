@@ -5,7 +5,7 @@ from loader import Loader, SessionConfig
 from stats import get_stats, get_stats_in_batches
 
 
-def print_stats(stats, elapsed_time):
+def print_stats(stats, elapsed_time: float) -> None:
     task_count = stats["task_count"]
     avg_response_time = stats["avg_response_time"]
     success = stats["success"]
@@ -18,7 +18,7 @@ def print_stats(stats, elapsed_time):
     )
 
 
-def print_results(loader):
+def print_results(loader: Loader) -> None:
     # we either print stats every second of every 10th of a second
     batch_duration = 1 if loader.duration > 10 else 0.1
     stats_in_batches = get_stats_in_batches(loader, batch_duration)
@@ -35,7 +35,7 @@ def print_results(loader):
     )
 
 
-def load_config(file_path):
+def load_config(file_path: str) -> dict:
     if not os.path.exists(file_path):
         raise FileNotFoundError(f"Config file not found: {file_path}")
 
@@ -45,7 +45,7 @@ def load_config(file_path):
     return config
 
 
-def main(config, qps, duration, timeout):
+def main(config: dict, qps: int, duration: int, timeout: int):
     session_config = SessionConfig(config["session"], timeout=timeout)
     loader = Loader(session_config, duration=duration, qps=qps)
 

@@ -1,4 +1,5 @@
 
+from typing import Optional
 import requests
 import threading
 import time
@@ -26,7 +27,7 @@ class SessionConfig:
     can be updated to support visiting multiple urls in a single pass.
     """
 
-    def __init__(self, session_config, timeout):
+    def __init__(self, session_config: dict, timeout: Optional[int]) -> None:
         self.url = session_config[0]["url"]
         self.headers = session_config[0]["headers"]
         if timeout == 0:
@@ -35,7 +36,7 @@ class SessionConfig:
 
 
 class Task:
-    def __init__(self, session_config):
+    def __init__(self, session_config: SessionConfig) -> None:
         """
         Initialize a task that will be used to load a single request session.
 
@@ -48,7 +49,7 @@ class Task:
         self.status = None
         self.thread = None
 
-    def _load(self):
+    def _load(self) -> None:
         self.start_time = time.time()
         try:
             response = requests.get(
@@ -71,7 +72,7 @@ class Task:
 
 
 class Loader:
-    def __init__(self, session_config, qps=100, duration=1):
+    def __init__(self, session_config: SessionConfig, qps: int = 100, duration: int = 1) -> None:
         self.tasks = []
         self.session_config = session_config
         self.qps = qps
@@ -79,11 +80,11 @@ class Loader:
         self.start_time = None
         self.end_time = None
 
-    def get_rate_limited_max_task_count(self):
+    def get_rate_limited_max_task_count(self) -> None:
         elapsed_seconds = time.time()-self.start_time
         return elapsed_seconds*self.qps
 
-    def start(self):
+    def start(self) -> None:
         self.start_time = time.time()
         logger.info(f"Started loader")
         task_count = 0
