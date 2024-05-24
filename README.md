@@ -70,7 +70,7 @@ Time  4.99s, Request count  400, Avg resp time  4.324s Success 100%, Error   0%,
 
 The sript runs a series of threads in parallel and waits for all the requests to finish, then prints the statistics.
 
-### Performance over time
+### Output - Performance over time
 * Time: 1 second window over which the requests occurred.
 * Request count: How many requests were made during the winow, can vary slightly for high request rates.
 * Avg resp time: The time it took for requests started during this time window to respond.
@@ -78,7 +78,7 @@ The sript runs a series of threads in parallel and waits for all the requests to
 * Error: 400 and 500 HTTP response statuses
 * Timeout: We can intentionally terminate long waiting requests from our end, this reports those cases.
 
-### Performance summary
+### Output - Summary
 * Time: This is the window during which the requests were started, they may have taken longer to complete
 * Request count: The total number of requests performed
 * The other metrics are the same as for performance over time
