@@ -8,7 +8,13 @@ logging.basicConfig(level=logging.INFO)
 
 logger = logging.getLogger(__name__)
 
-TIME_OUT_STATUS = 600
+
+class RequestsErrorStatus:
+    """
+    This lets us report on errors with ULR requests as if they were HTTP response codes.
+    """
+    CONNECTION_ERROR = 600
+    TIME_OUT = 700
 
 
 class SessionConfig:
@@ -22,6 +28,7 @@ class SessionConfig:
 
     def __init__(self, session_config, timeout=None):
         self.url = session_config[0]["url"]
+        self.headers = session_config[0]["headers"]
         self.timeout = timeout
 
 
@@ -43,11 +50,15 @@ class Task:
         self.start_time = time.time()
         try:
             response = requests.get(
-                self.session_config.url, timeout=self.session_config.timeout
+                self.session_config.url,
+                headers=self.session_config.headers,
+                timeout=self.session_config.timeout
             )
             self.status = response.status_code
+        except requests.exceptions.ConnectionError:
+            self.status = RequestsErrorStatus.CONNECTION_ERROR
         except requests.exceptions.Timeout:
-            self.status = TIME_OUT_STATUS
+            self.status = RequestsErrorStatus.TIME_OUT
 
         self.end_time = time.time()
 
@@ -57,7 +68,7 @@ class Task:
 
 
 class Loader:
-    def __init__(self, session_config, qps=1000, duration=1):
+    def __init__(self, session_config, qps=100, duration=1):
         self.tasks = []
         self.session_config = session_config
         self.qps = qps
@@ -88,9 +99,9 @@ class Loader:
             self.tasks.append(task)
             task.start()
             task_count += 1
-            if task_count % 1000 == 0:
+            if task_count % self.qps == 0:
                 logger.info(
-                    f"Started {task_count} tasks at {time.time()-self.start_time:.2f}s"
+                    f"Started {task_count} tasks as of {time.time()-self.start_time:.2f}s"
                 )
 
         for task in self.tasks:

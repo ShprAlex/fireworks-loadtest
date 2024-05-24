@@ -42,8 +42,8 @@ def load_config(file_path):
 
 
 def main(config):
-    session_config = SessionConfig(config["session"], timeout=1)
-    loader = Loader(session_config, duration=2)
+    session_config = SessionConfig(config["session"], timeout=10)
+    loader = Loader(session_config, duration=20)
     loader.start()
     print_results(loader)
 

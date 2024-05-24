@@ -23,9 +23,12 @@ def get_stats(tasks):
         "task_count": task_count,
         "avg_response_time": avg_response_time,
         "status_percents": status_percents,
+        # 100, 200, and 300 http status response
         "success": status_percents[1] + status_percents[2] + status_percents[3],
-        "error": status_percents[4] + status_percents[5],
-        "timeout": status_percents[6]
+        # 400 errors, 500 errors, and "600" status indicating connection error
+        "error": status_percents[4] + status_percents[5] + status_percents[6],
+        # Track forced timeouts "700" from our side separately
+        "timeout": status_percents[7]
     }
 
 
