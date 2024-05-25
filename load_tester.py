@@ -9,12 +9,14 @@ from stats import get_stats, get_stats_in_batches
 def print_stats(stats, elapsed_time: float) -> None:
     task_count = stats["task_count"]
     avg_response_time = stats["avg_response_time"]
+    max_response_time = stats["max_response_time"]
     success = stats["success"]
     error = stats["error"]
     timeout = stats["timeout"]
 
     print(
-        f"Time {elapsed_time:5.2f}s, Request count {task_count:4d}, Avg resp time {avg_response_time:6.3f}s "
+        f"Time {elapsed_time:5.2f}s, Request count {task_count:4d}, "
+        f"Avg resp time {avg_response_time:6.3f}s, Max {max_response_time:6.3f}s, "
         f"Success {success*100:3.0f}%, Error {error*100:3.0f}%, Timeout {timeout*100:3.0f}%"
     )
 

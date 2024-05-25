@@ -7,6 +7,7 @@ from loader import Task
 def get_stats(tasks: List[Task]) -> dict:
     task_count = len(tasks)
     avg_response_time = 0
+    max_response_time = 0
 
     # group response statuses starting with 100, 200, etc.
     response_statuses = [0]*8
@@ -19,6 +20,7 @@ def get_stats(tasks: List[Task]) -> dict:
         for task in tasks:
             response_statuses[task.status//100] += 1
         avg_response_time = sum(response_times)/task_count
+        max_response_time = max(response_times)
         status_percents = [
             status_count / task_count for status_count in response_statuses
         ]
@@ -26,6 +28,7 @@ def get_stats(tasks: List[Task]) -> dict:
     return {
         "task_count": task_count,
         "avg_response_time": avg_response_time,
+        "max_response_time": max_response_time,
         "status_percents": status_percents,
         # 100, 200, and 300 http status response
         "success": status_percents[1] + status_percents[2] + status_percents[3],
@@ -40,7 +43,7 @@ def group_completed_tasks_into_batches(loader, batch_duration: float = 0.1) -> L
     batch_start_time = loader.start_time
     batches = []
     task_index = 0
-    while batch_start_time < loader.start_time+loader.duration:
+    while task_index < len(loader.tasks):
         batch = []
         batches.append(batch)
         while task_index < len(loader.tasks):
