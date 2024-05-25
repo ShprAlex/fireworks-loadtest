@@ -1,9 +1,10 @@
 
-from typing import Optional
+import logging
 import requests
 import threading
 import time
-import logging
+import tracemalloc
+from typing import Optional
 
 logging.basicConfig(level=logging.INFO)
 
@@ -15,6 +16,7 @@ class RequestsErrorStatus:
     This lets us report on errors with URL requests as if they were HTTP response codes.
     """
     CONNECTION_ERROR = 600
+    REQUEST_ERROR = 601
     TIME_OUT = 700
 
 
@@ -57,11 +59,18 @@ class Task:
                 timeout=self.session_config.timeout
             )
             self.status = response.status_code
-        except requests.exceptions.ConnectionError as error:
-            self.status = RequestsErrorStatus.CONNECTION_ERROR
-            logger.warning(error)
         except requests.exceptions.Timeout:
             self.status = RequestsErrorStatus.TIME_OUT
+        except requests.exceptions.ConnectionError as error:
+            if "Read timed out" in str(error):
+                self.status = RequestsErrorStatus.TIME_OUT
+            else:
+                self.status = RequestsErrorStatus.CONNECTION_ERROR
+                logger.warning(error)
+        except requests.exceptions.RequestException as error:
+            # Catch all
+            self.status = RequestsErrorStatus.REQUEST_ERROR
+            logger.warning(error)
 
         self.end_time = time.time()
 
@@ -91,6 +100,19 @@ class Loader:
         self.start_time = None
         self.end_time = None
 
+    def log_progress(self) -> None:
+        """
+        Log the progress of our load test. These logs are meant for an internal audience
+        to diagnose any issues with Loader performance.
+        """
+        task_count = len(self.tasks)
+        mem_usage = tracemalloc.get_traced_memory()[0]
+        mem_usage_str = tracemalloc._format_size(mem_usage, False)
+        logger.info(
+            f"Started {task_count} tasks as of {time.time()-self.start_time:.2f}s - "
+            f"Live thread count {threading.active_count()}, Mem usage {mem_usage_str}"
+        )
+
     def get_rate_limited_max_task_count(self) -> float:
         """
         Calculate how many requests we should have made by this time assuming an even request rate.
@@ -106,13 +128,15 @@ class Loader:
         """
         self.start_time = time.time()
         logger.info(f"Started loader")
-        task_count = 0
+
+        tracemalloc.start()  # Trace memory allocations for internal diagnostics
+
         expected_end_time = self.start_time+self.duration
         expected_task_count = self.qps*self.duration
         # we're calling tasks at an even rate but for tidy accounting make sure we reach
         # expected_task_count with the very last batch which might take an extra millisecond.
-        while time.time() < expected_end_time or task_count < expected_task_count:
-            if task_count > self.get_rate_limited_max_task_count():
+        while time.time() < expected_end_time or len(self.tasks) < expected_task_count:
+            if len(self.tasks) > self.get_rate_limited_max_task_count():
                 # sleep for 1ms to save CPU cycles
                 # this still allows us to request more than 1000 times a second because
                 # multiple requests will happen after we wake up
@@ -121,19 +145,18 @@ class Loader:
             task = Task(self.session_config)
             self.tasks.append(task)
             task.start()
-            task_count += 1
-            if task_count % self.qps == 0:
-                logger.info(
-                    f"Started {task_count} tasks as of {time.time()-self.start_time:.2f}s"
-                )
+            if len(self.tasks) % self.qps == 0:
+                self.log_progress()
 
         for task in self.tasks:
             task.thread.join()
 
         logger.info(
-            f"Completed {task_count} tasks in {time.time()-self.start_time:.2f}s"
+            f"Completed {len(self.tasks)} tasks in {time.time()-self.start_time:.2f}s"
         )
 
         # for the Loader we consider the end_time to be the start_time of
         # the last tasks (not how long it takes requests to complete)
         self.end_time = max([task.start_time for task in self.tasks])
+
+        tracemalloc.stop()
