@@ -1,7 +1,7 @@
 {
-    "qps": 100,
-    "duration": 20,
-    "timeout": 10,
+    "qps": 30,
+    "duration": 15,
+    "timeout": 60,
     "session": [
         {
             "url": "https://www.yahoo.com/",
