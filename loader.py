@@ -92,13 +92,17 @@ class Loader:
         duration (int): How many seconds to run the load test for.
     """
 
-    def __init__(self, session_config: SessionConfig, qps: int = 100, duration: int = 1) -> None:
+    def __init__(
+        self, session_config: SessionConfig, qps: int, duration: int
+    ) -> None:
         self.tasks = []
         self.session_config = session_config
         self.qps = qps
         self.duration = duration
         self.start_time = None
         self.end_time = None
+        # track memory for qps<=500, for larger qps it slows down thread creation.
+        self.track_memory = self.qps <= 500
 
     def log_progress(self) -> None:
         """
@@ -106,20 +110,24 @@ class Loader:
         to diagnose any issues with Loader performance.
         """
         task_count = len(self.tasks)
-        mem_usage = tracemalloc.get_traced_memory()[0]
-        mem_usage_str = tracemalloc._format_size(mem_usage, False)
+        mem_usage_str = ""
+        if self.track_memory:
+            mem_usage = tracemalloc.get_traced_memory()[0]
+            mem_usage_str = tracemalloc._format_size(mem_usage, False)
+            mem_usage_str = f", Mem usage {mem_usage_str}"
+
         logger.info(
             f"Started {task_count} tasks as of {time.time()-self.start_time:.2f}s - "
-            f"Live thread count {threading.active_count()}, Mem usage {mem_usage_str}"
+            f"Live thread count {threading.active_count()}{mem_usage_str}"
         )
 
-    def get_rate_limited_max_task_count(self) -> float:
+    def get_rate_limited_max_task_count(self) -> int:
         """
         Calculate how many requests we should have made by this time assuming an even request rate.
         We use this value to limit our request rate to match the desired QPS.
         """
         elapsed_seconds = time.time()-self.start_time
-        return elapsed_seconds*self.qps
+        return int(elapsed_seconds*self.qps)
 
     def start(self) -> None:
         """
@@ -129,7 +137,8 @@ class Loader:
         self.start_time = time.time()
         logger.info(f"Started loader")
 
-        tracemalloc.start()  # Trace memory allocations for internal diagnostics
+        if self.track_memory:
+            tracemalloc.start()  # Trace memory allocations for internal diagnostics
 
         expected_end_time = self.start_time+self.duration
         expected_task_count = self.qps*self.duration
@@ -159,4 +168,5 @@ class Loader:
         # the last tasks (not how long it takes requests to complete)
         self.end_time = max([task.start_time for task in self.tasks])
 
-        tracemalloc.stop()
+        if self.track_memory:
+            tracemalloc.stop()
