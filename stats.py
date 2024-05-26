@@ -1,4 +1,4 @@
-
+import math
 from typing import List
 
 from loader import Task
@@ -40,25 +40,13 @@ def get_stats(tasks: List[Task]) -> dict:
 
 
 def group_completed_tasks_into_batches(loader, batch_duration: float = 0.1) -> List[List[Task]]:
-    batch_start_time = loader.start_time
-    batches = []
-    task_index = 0
-    while task_index < len(loader.tasks):
-        batch = []
-        batches.append(batch)
-        while task_index < len(loader.tasks):
-            task = loader.tasks[task_index]
-            if task.start_time < batch_start_time+batch_duration:
-                batch.append(task)
-                task_index += 1
-            else:
-                break
-        batch_start_time += batch_duration
-
-    if len(batches[-1]) == 0:
-        # if all the requests fit neatly into the allotted duration we don't need
-        # a trailing empty batch.
-        batches.pop()
+    batch_count = math.ceil(
+        (loader.end_time - loader.start_time)/batch_duration
+    )
+    batches = [[] for _ in range(batch_count)]
+    for task in loader.tasks:
+        batch_index = int((task.start_time-loader.start_time) / batch_duration)
+        batches[batch_index].append(task)
 
     return batches
 
