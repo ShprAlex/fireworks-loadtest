@@ -6,8 +6,6 @@ import time
 import tracemalloc
 from typing import Optional
 
-logging.basicConfig(level=logging.INFO)
-
 logger = logging.getLogger(__name__)
 
 
@@ -66,11 +64,12 @@ class Task:
                 self.status = RequestsErrorStatus.TIME_OUT
             else:
                 self.status = RequestsErrorStatus.CONNECTION_ERROR
-                logger.warning(error)
+                # for this exersize we log expected errors only for debug to keep logs clean
+                logger.debug(error)
         except requests.exceptions.RequestException as error:
             # Catch all
             self.status = RequestsErrorStatus.REQUEST_ERROR
-            logger.warning(error)
+            logger.debug(error)
 
         self.end_time = time.time()
 

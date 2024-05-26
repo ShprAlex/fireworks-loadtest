@@ -3,6 +3,7 @@ import json
 import os
 from typing import Optional
 from loader import Loader, SessionConfig
+import logging
 from stats import get_stats, get_stats_in_batches
 
 
@@ -81,6 +82,9 @@ if __name__ == "__main__":
     parser.add_argument(
         "--url", type=str, default=None, help="URL to load test, uses headers from config file."
     )
+    parser.add_argument(
+        "--debug", action='store_true', help="Debug mode has more verbose logging."
+    )
     args = parser.parse_args()
     config_file = args.config
     config = load_config(config_file)
@@ -88,5 +92,7 @@ if __name__ == "__main__":
     qps = args.qps if args.qps is not None else config["qps"]
     duration = args.duration if args.duration is not None else config["duration"]
     timeout = args.timeout if args.timeout is not None else config["timeout"]
+
+    logging.basicConfig(level=logging.DEBUG if args.debug else logging.INFO)
 
     main(config=config, qps=qps, duration=duration, timeout=timeout, url=args.url)
