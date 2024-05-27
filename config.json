@@ -1,5 +1,5 @@
 {
-    "qps": 30,
+    "qps": 12,
     "duration": 15,
     "timeout": 60,
     "session": [
