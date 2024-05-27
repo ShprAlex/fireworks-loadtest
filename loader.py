@@ -67,7 +67,7 @@ class Task:
                 self.status = RequestsErrorStatus.TIME_OUT
             else:
                 self.status = RequestsErrorStatus.CONNECTION_ERROR
-                # for this exersize we log expected errors only for debug to keep logs clean
+                # for this exercise we log expected errors only for debug to keep logs clean
                 logger.debug(error)
         except requests.exceptions.RequestException as error:
             # Catch all

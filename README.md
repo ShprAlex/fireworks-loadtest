@@ -69,11 +69,11 @@ Summary:
 Time  4.98s, Request count  300, Avg resp time  1.184s, Max  2.330s, Success 100%, Error   0%, Timeout   0%
 ```
 
-The sript runs a series of threads in parallel and waits for all the requests to finish, then prints the statistics.
+The script runs a series of threads in parallel and waits for all the requests to finish, then prints the statistics.
 
 ### Output - Performance over time
 * Time: 1 second window over which the requests occurred.
-* Request count: How many requests were made during the winow, can vary slightly for high request rates.
+* Request count: How many requests were made during the window, can vary slightly for high request rates.
 * Avg resp time: The average time it took requests started during this time window to respond.
 * Max: The maximum time it took for a request during this time window to respond.
 * Success: 200 HTTP response statuses (also 100 and 300 statuses)
@@ -87,9 +87,9 @@ The sript runs a series of threads in parallel and waits for all the requests to
 
 ## Design Decisions
 
-Python muti-threading is good enough for simple load testing.
+Python multi-threading is good enough for simple load testing.
 
-Experimentation shows we can hanle 1,000 requests a second on a macbook. At a requested QPS of above 2,000 we start getting a lag where we can't generate threads with requests at this rate. The limiting factor seems to be the python requests library, or some system limitation on how fast we can create reqests. To handle larger request volumes we can introduce multi-processing and otherwise try to scale the application horizontally.
+Experimentation shows we can handle 1,000 requests a second on a macbook. At a requested QPS of above 2,000 we start getting a lag where we can't generate threads with requests at this rate. The limiting factor seems to be the python requests library, or some system limitation on how fast we can create requests. To handle larger request volumes we can introduce multi-processing and otherwise try to scale the application horizontally.
 
 A decision was made to specify the time window during which the requests were started, and allow for requests to finish beyond the window duration. Alternatively we could have terminated the ongoing requests at the conclusion of the time window. The former approach seems to create nicer results where we know how many requests we'll be making. The time it takes to finish is roughly equal to the requested duration + max response time.
 
@@ -97,7 +97,7 @@ A decision was made to specify the time window during which the requests were st
 
 * The loader test outputs are simply printed to standard out. The results could be written to an output file or a database.
 
-* We could support other types of load tests like increasing the QPS over time. We could then benchmark the reate at which we get a high error rate.
+* We could support other types of load tests like increasing the QPS over time. We could then benchmark the rate at which we get a high error rate.
 
 * We could terminate the test early if we see a high error rate.
 
