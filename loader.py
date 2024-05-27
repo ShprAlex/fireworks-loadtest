@@ -1,3 +1,6 @@
+"""
+loader.py contains the bulk of the load tester logic.
+"""
 
 import logging
 import requests

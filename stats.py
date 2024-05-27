@@ -1,3 +1,7 @@
+"""
+stats.py helps compile stats for loader performance overall, and broken down by time.
+"""
+
 import math
 from typing import List
 

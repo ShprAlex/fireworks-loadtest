@@ -1,3 +1,9 @@
+"""
+load_tester.py is the application entry point. It calls out to other modules to do the work
+and just handles printing the results and getting parameters from the command line /
+loading the config file.
+"""
+
 import argparse
 import json
 import os
